@@ -237,7 +237,7 @@ for q in questions:
     else:
         total_points += 1
 
-if os.path.isfile('answers.json'):
+if os.path.isfile(answer_file):
     with open(answer_file) as f:
         answers = json.load(f)
 else:
