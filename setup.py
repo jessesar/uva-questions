@@ -7,4 +7,9 @@ setup(
     packages=['questions'],
     author='Jesse van der Sar',
     author_email='j.d.vandersar@uva.nl',
+    install_requires=[
+        'ipywidgets',
+        'ipython',
+        'jupyter'
+    ],
 )
