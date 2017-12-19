@@ -23,6 +23,10 @@ def load():
         
         min-width: 180px !important;
     }
+    
+    .widget-textarea {
+        width: 750px;
+    }
     </style>
 
     <script>
@@ -57,8 +61,8 @@ def load():
     setInterval(runAndHide, 200)
 
     setInterval(function() {
-        $('.widget-text input[type="text"]').unbind('keydown')
-        $('.widget-text input[type="text"]').on('keydown', function(e) {
+        $('.widget-text input[type="text"], .widget-textarea textarea').unbind('keydown')
+        $('.widget-text input[type="text"], .widget-textarea textarea').on('keydown', function(e) {
             if((e.metaKey || e.ctrlKey) && e.keyCode == 83) {
                 IPython.notebook.save_checkpoint()
 
