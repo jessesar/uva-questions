@@ -69,11 +69,17 @@ def load():
     }, 5000)
     </script>"""))
 
-def create_input(q):
-    w = widgets.Text(
-        placeholder='Vul in...',
-        value=answers[q]['answer']
-    )
+def create_input(q, textarea=False):
+    if textarea:
+        w = widgets.Textarea(
+            placeholder='Vul in...',
+            value=answers[q]['answer']
+        )
+    else:
+        w = widgets.Text(
+            placeholder='Vul in...',
+            value=answers[q]['answer']
+        )
     
     w.question = q
     w.observe(answer_changed)
@@ -197,7 +203,10 @@ def ask(qid):
             widget.layout.justify_content = 'flex-end'
 
     else:
-        field = create_input(qid)
+        if 'type' in question['properties'] and question['properties']['type'] == 'long':
+            field = create_input(qid, textarea=True)
+        else:
+            field = create_input(qid)
 
         widget = widgets.HBox([field, answer_spec_score])
         widget.layout.justify_content = 'space-between'
@@ -244,5 +253,3 @@ else:
     answers = { q['id']: { 'answer': '', 'score': 0 } for q in questions }
     
     save_answers()
-    
-# fields = [ (q, create_input(q)) for q in questions ]
