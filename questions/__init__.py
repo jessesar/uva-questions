@@ -254,6 +254,6 @@ if os.path.isfile(answer_file):
     with open(answer_file) as f:
         answers = json.load(f)
 else:
-    answers = { q['id']: { 'answer': '', 'score': 0 } for q in questions }
+    answers = { q['id']: { 'answer': '' } for q in questions }
     
     save_answers()
