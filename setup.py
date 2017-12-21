@@ -10,6 +10,7 @@ setup(
     install_requires=[
         'ipywidgets',
         'ipython',
-        'jupyter'
+        'jupyter',
+        'requests'
     ],
 )
