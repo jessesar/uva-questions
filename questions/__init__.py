@@ -209,6 +209,13 @@ def pretty_print_answers():
         display(Markdown('*'+ a['answer'] +'*'))
 
 def ask(qid):
+    def isfloat(value):
+        try:
+            float(value)
+            return True
+        except ValueError:
+            return False
+    
     question = questions_map[qid]
 
     if 'answer-spec' in question and not ('type' in question['properties'] and question['properties']['type'] == 'open'):
