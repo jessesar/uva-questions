@@ -8,9 +8,8 @@ setup(
     author='Jesse van der Sar',
     author_email='j.d.vandersar@uva.nl',
     install_requires=[
-        'ipywidgets',
-        'ipython',
-        'jupyter',
+        'ipywidgets==7.0.5',
+        'jupyter==1.0.0',
         'requests'
     ],
 )
