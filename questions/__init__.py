@@ -139,19 +139,22 @@ def load():
 
 def create_input(q, textarea=False, code=False):
     if role == 'student':
-        if textarea:
-            w = widgets.Textarea(
-                placeholder='Vul in...',
-                value=answers[q]['answer']
-            )
+        if not code:
+            if textarea:
+                w = widgets.Textarea(
+                    placeholder='Vul in...',
+                    value=answers[q]['answer']
+                )
+            else:
+                w = widgets.Text(
+                    placeholder='Vul in...',
+                    value=answers[q]['answer']
+                )
+            
+            w.question = q
+            w.observe(answer_changed)
         else:
-            w = widgets.Text(
-                placeholder='Vul in...',
-                value=answers[q]['answer']
-            )
-        
-        w.question = q
-        w.observe(answer_changed)
+            w = widgets.HTML('')
     else:
         if len(answers[q]['answer'].strip()):
             answer = answers[q]['answer'].replace('\n', '<br />')
