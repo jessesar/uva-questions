@@ -329,7 +329,7 @@ if 'STUDENT_ANSWERS_FILE' in os.environ:
 elif os.path.exists('answers.json'):
     answer_file = 'answers.json'
 else:
-    answer_file = None
+    answer_file = 'answers.json'
 
 if 'TEACHER_ANSWER_MODEL' in os.environ:
     answer_model = os.environ['TEACHER_ANSWER_MODEL']
