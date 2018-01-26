@@ -249,7 +249,11 @@ def ask(qid):
         spec_html = '''<div style="margin-top: -3px;"><span class="spec-label">'''+ spec_label +'''</span>:&nbsp;&nbsp;<pre style="display: inline; color: '''+ color +'''">'''+ question['answer-spec'] +'''</pre></div>'''
 
         answer_spec = widgets.HTML(value=spec_html)
-        score_description = 'Score (maximaal '+ str(question['properties']['points']) +'):'
+        
+        if 'points' in question['properties']:
+            score_description = 'Score (maximaal '+ str(question['properties']['points']) +'):'
+        else:
+            score_description = 'Score (maximaal 1):'
     else:
         color = 'black'
         answer_spec = None
@@ -257,7 +261,7 @@ def ask(qid):
         if 'points' in question['properties']:
             score_description = 'Score (maximaal '+ str(question['properties']['points']) +'):'
         else:
-            score_description = 'Score:'
+            score_description = 'Score (maximaal 1):'
 
     if role == 'teacher':
         if len(str(answers[qid]['score'])):
