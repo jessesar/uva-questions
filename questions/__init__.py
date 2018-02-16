@@ -191,9 +191,9 @@ def score_changed(change):
                 try:
                     new = float(new)
                 except:
-                    new = np.nan
+                    new = 0
             else:
-                new = np.nan
+                new = 0
                 
             answers[q]['score'] = new
             answers_df = get_answers_df(student_answers)
