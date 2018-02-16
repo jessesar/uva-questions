@@ -322,6 +322,27 @@ def ask(qid):
         widget.layout.justify_content = 'space-between'
 
     display(widget)
+    
+def save_student_id(e):
+    if not student_id_save_button.disabled:
+        global student_id
+        
+        old_student_id = student_id
+        student_id = student_id_field.value
+        
+        answers_df = get_answers_df(student_answers)
+        answers_df = answers_df.reset_index().replace(old_student_id, student_id).set_index(['student', 'question']).sort_index(level=0)
+        
+        save_answers_df(student_answers, answers_df)
+        
+        student_id_save_button.disabled = True
+ 
+def new_student_id_changed(change):
+    if change['name'] == 'value':
+        global student_id
+        
+        student_id_save_button.disabled = (str(change.new) == str(student_id))
+        
 
 if 'STUDENT_QUESTIONS_FILE' in os.environ:
     questions_file = os.environ['STUDENT_QUESTIONS_FILE']
@@ -387,13 +408,43 @@ if not fail:
     
         student_answers_df = get_answers_df(student_answers)
         
-        student_id = str(get_notebook_name().split('.')[0].split('_')[-1])
+        try:
+            student_id = str(get_notebook_name().split('.')[0].split('_')[-1])
+        except:
+            student_id = ''
     
-        display(widgets.HTML('<div class="exam-message">Het volgende student ID is gedetecteerd: <strong>%s</strong><br /><small>Verifi&euml;er of dit correct is.</small></div>' % student_id))
+        # display(widgets.HTML('<div class="exam-message">Het volgende student ID is gedetecteerd: <strong>%s</strong><br /><small>Verifi&euml;er of dit correct is.</small></div>' % student_id))
+        display(widgets.HTML('<div class="exam-message" style="padding-bottom: 0px; margin-bottom: -5px;">Het volgende student ID is gedetecteerd:</div>'))
+        
+        student_id_field = widgets.Text(
+            placeholder='Student ID',
+            value=student_id
+        )
+        
+        student_id_field.observe(new_student_id_changed)
+        
+        student_id_save_button = widgets.Button(
+            description='Opslaan',
+            disabled=True,
+            button_style='warning', # 'success', 'info', 'warning', 'danger' or ''
+            tooltip='Dit overschrijft het studentnummer in het antwoordbestand.',
+            icon='check'
+        )
+        
+        student_id_save_button.on_click(save_student_id)
+        
+        display(widgets.HBox([student_id_field, student_id_save_button]))
+        
+        display(widgets.HTML('<div class="exam-message" style="padding-top: 0px; margin-top: -5px;"><small>Verifi&euml;er of dit correct is en pas zo nodig aan.</small></div>'))
+        
+        auto_qs = [ q for q in questions if 'auto-score' in q['properties'] and q['properties']['auto-score'].lower() == 'true' ]
+        manual_qs = [ q for q in questions if 'auto-score' not in q['properties'] or ('auto-score' in q['properties'] and q['properties']['auto-score'].lower() == 'false') ]
+        
+        display(widgets.HTML('<div class="exam-message" style="margin-top: -10px; padding-top: 0px; padding-bottom: 0px; color: #666; line-height: 1.4;"><small><li>%d automatisch nakijkbare vragen</li><li>%d handmatig nakijkbare vragen</li></small></div>' % (len(auto_qs), len(manual_qs))))
         
         if os.path.exists('auto-scoring-done'):
             display(widgets.HTML('<div class="exam-message"><strong style="color: darkgreen;">Auto-scoring is uitgevoerd.</strong><br /><small>Automatisch ingevulde scores mogen overschreven worden.</small></div>'))
-        else:
+        elif len(auto_qs) > 0:
             display(widgets.HTML('<div class="exam-message"><strong style="color: darkred;">Auto-scoring is nog niet uitgevoerd.</strong></div>'))
         
         if student_id not in student_answers_df.index:
@@ -411,4 +462,4 @@ if not fail:
         else:
             answers = { q['id']: { 'answer': '' } for q in questions }
             
-            save_answers()
+            #save_answers()
