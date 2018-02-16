@@ -75,8 +75,8 @@ def load():
         }
         
         .jupyter-widgets-view {
-            border-top: 1px solid #ccc;
-            border-bottom: 1px solid #ccc;
+            /*border-top: 1px solid #ccc;*/
+            /*border-bottom: 1px solid #ccc;*/
         }
         
         .exam-message {
@@ -221,7 +221,22 @@ def ask(qid):
     
     question = questions_map[qid]
 
-    if 'answer-spec' in question and not ('type' in question['properties'] and question['properties']['type'] == 'open'):
+    if 'type' not in question['properties']:
+        question_type = 'oneliner'
+    else:
+        question_type = question['properties']['type']
+
+    if question_type == 'oneliner':
+        field = create_input(qid)
+    elif question_type == 'long':
+        field = create_input(qid, textarea=True)
+    elif question_type == 'markdown':
+        field = widgets.HTML('<strong style="color: #666;">Jouw antwoord:</strong>')
+    elif question_type == 'code':
+        field = widgets.HTML('<strong style="color: #666;">Jouw code:</strong>')
+
+    # and not ('type' in question['properties'] and question['properties']['type'] == 'open')
+    if 'answer-spec' in question and 'auto-score' in question['properties'] and question['properties']['auto-score'].lower() == 'true':
         X = answers[qid]['answer']
 
         r = False
@@ -231,18 +246,9 @@ def ask(qid):
             pass
 
         if r:
-            #if 'points' in question['properties']:
-            #    points = float(question['properties']['points'])
-            #else:
-            #    points = 1
-
-            #answers[qid]['score'] = points
             color = 'green'
         else:
-            #answers[qid]['score'] = 0
             color = 'red'
-
-        # save_answers()
 
         spec_label = 'Test'
 
@@ -299,11 +305,10 @@ def ask(qid):
 
         answer_spec_score = widgets.HTML(value='<span style="color: #666;"><strong>%s</strong> / %d punten</span>' % (points, total_points))
 
-    if 'type' in question['properties'] and question['properties']['type'] == 'open':
-        
-        field = create_input(qid, code=True)
-        
-        if 'answer-spec' in question:
+    if 'answer-spec' in question:
+        if 'auto-score' not in question['properties'] \
+            or ('auto-score' in question['properties'] and question['properties']['auto-score'].lower() == 'false'):
+
             spec_label = 'Richtlijn'
             spec_html = '''<div style="margin-top: 6px;"><span class="spec-label">'''+ spec_label +'''</span>:&nbsp;&nbsp;<pre style="display: inline;">'''+ question['answer-spec'] +'''</pre></div>'''
 
@@ -312,13 +317,7 @@ def ask(qid):
         else:
             widget = widgets.HBox([field, answer_spec_score])
             widget.layout.justify_content = 'space-between'
-
     else:
-        if 'type' in question['properties'] and question['properties']['type'] == 'long':
-            field = create_input(qid, textarea=True)
-        else:
-            field = create_input(qid)
-
         widget = widgets.HBox([field, answer_spec_score])
         widget.layout.justify_content = 'space-between'
 
