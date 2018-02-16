@@ -396,6 +396,13 @@ if not fail:
         else:
             display(widgets.HTML('<div class="exam-message"><strong style="color: darkred;">Auto-scoring is nog niet uitgevoerd.</strong></div>'))
         
+        if student_id not in student_answers_df.index:
+            for q in questions:
+                student_answers_df.loc[(student_id, q['id']), 'score'] = 0
+                student_answers_df.loc[(student_id, q['id']), 'answer'] = None
+            
+            save_answers_df(student_answers, student_answers_df)
+        
         answers = student_answers_df.loc[student_id].fillna('').to_dict(orient='index')
     else:
         if os.path.isfile(answer_file):
