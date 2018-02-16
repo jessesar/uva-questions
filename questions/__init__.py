@@ -191,9 +191,9 @@ def score_changed(change):
                 try:
                     new = float(new)
                 except:
-                    new = 0
+                    new = 0.0
             else:
-                new = 0
+                new = 0.0
                 
             answers[q]['score'] = new
             answers_df = get_answers_df(student_answers)
@@ -464,7 +464,7 @@ if not fail:
         
         if student_id not in student_answers_df.index:
             for q in questions:
-                student_answers_df.loc[(student_id, q['id']), 'score'] = 0
+                student_answers_df.loc[(student_id, q['id']), 'score'] = 0.0
                 student_answers_df.loc[(student_id, q['id']), 'answer'] = None
             
             save_answers_df(student_answers, student_answers_df)
