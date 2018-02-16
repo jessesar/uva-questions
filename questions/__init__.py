@@ -1,5 +1,5 @@
 from ipywidgets import widgets
-from IPython.display import display, Markdown, Latex
+from IPython.display import display, display_javascript, Markdown, Latex
 from IPython.core.display import HTML, Javascript
 
 import re
@@ -15,7 +15,7 @@ import IPython
 from IPython.lib import kernel
 from notebook.notebookapp import list_running_servers
 
-def get_notebook_name():
+def get_notebook_info():
     connection_file_path = kernel.get_connection_file()
     connection_file = os.path.basename(connection_file_path)
     kernel_id = connection_file.split('-', 1)[1].split('.')[0]
@@ -23,6 +23,7 @@ def get_notebook_name():
     servers = list(list_running_servers())
     
     nb_name = None
+    student_id = None
     
     for s in servers:
         try:
@@ -32,10 +33,14 @@ def get_notebook_name():
             
         for sess in sessions:
             if sess['kernel']['id'] == kernel_id:
+                metadata = json.load(open(os.path.basename(sess['path'])))['metadata']
+                if 'uva_student_id' in metadata:
+                    student_id = metadata['uva_student_id']
+            
                 nb_name = os.path.basename(sess['notebook']['path'])
                 break
             
-    return nb_name
+    return (nb_name, student_id)
 
 def get_answers_df(f):
     df = pd.read_csv(f, dtype={ 'student': str })
@@ -327,8 +332,8 @@ def save_student_id(e):
     if not student_id_save_button.disabled:
         global student_id
         
-        old_student_id = student_id
-        student_id = student_id_field.value
+        old_student_id = str(student_id)
+        student_id = str(student_id_field.value)
         
         answers_df = get_answers_df(student_answers)
         answers_df = answers_df.reset_index().replace(old_student_id, student_id).set_index(['student', 'question']).sort_index(level=0)
@@ -336,6 +341,10 @@ def save_student_id(e):
         save_answers_df(student_answers, answers_df)
         
         student_id_save_button.disabled = True
+        
+        #display(HTML("<script>if(!('uva_student_id' in IPython.notebook.metadata) || ('uva_student_id' in IPython.notebook.metadata && IPython.notebook.metadata['uva_student_id'] != '%s')) { IPython.notebook.metadata['uva_student_id'] = '%s'; IPython.notebook.save_checkpoint(); }</script>" % (str(student_id), str(student_id))))
+        
+        display_javascript(Javascript("if(!('uva_student_id' in IPython.notebook.metadata) || ('uva_student_id' in IPython.notebook.metadata && IPython.notebook.metadata['uva_student_id'] != '%s')) { IPython.notebook.metadata['uva_student_id'] = '%s'; IPython.notebook.save_checkpoint(); }" % (str(student_id), str(student_id))))
  
 def new_student_id_changed(change):
     if change['name'] == 'value':
@@ -409,7 +418,13 @@ if not fail:
         student_answers_df = get_answers_df(student_answers)
         
         try:
-            student_id = str(get_notebook_name().split('.')[0].split('_')[-1])
+            nb_name, nb_student_id = get_notebook_info()
+        
+            if nb_student_id:
+                student_id = nb_student_id
+            else:
+                student_id = nb_name.split('.')[0].split('_')[-1]
+            
         except:
             student_id = ''
     
