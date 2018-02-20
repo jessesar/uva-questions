@@ -40,7 +40,7 @@ def get_notebook_info():
                 nb_name = os.path.basename(sess['notebook']['path'])
                 break
             
-    return (nb_name, student_id)
+    return (nb_name, student_id, metadata)
 
 def get_answers_df(f):
     df = pd.read_csv(f, dtype={ 'student': str })
@@ -54,6 +54,43 @@ def save_answers_df(f, df):
     df.to_csv(f, encoding='utf8')
 
 def load():
+    global student_id
+    
+    try:
+        nb_name, nb_student_id, metadata = get_notebook_info()
+    
+        if nb_student_id:
+            student_id = nb_student_id
+        else:
+            student_id = ''
+        
+    except:
+        student_id = ''
+
+    display(widgets.HTML('<div class="exam-message" style="margin-top: 10px; padding-bottom: 0px;"><strong>Vul hieronder je UvAnetID in en klik op Opslaan, anders kan je tentamen niet worden nagekeken.</strong></div>'))
+    
+    global student_id_field
+    
+    student_id_field = widgets.Text(
+        placeholder='UvAnetID',
+        value=student_id
+    )
+    
+    student_id_field.observe(new_student_id_changed)
+    
+    global student_id_save_button
+    
+    student_id_save_button = widgets.Button(
+        description='Opslaan',
+        disabled=True,
+        button_style='success', # 'success', 'info', 'warning', 'danger' or ''
+        icon='check'
+    )
+    
+    student_id_save_button.on_click(save_student_id)
+    
+    display(widgets.HBox([student_id_field, student_id_save_button]))  
+    
     display(HTML("""<style>
         h4 {
             margin-top: 20px;
@@ -140,6 +177,8 @@ def load():
                 }
             })
         }, 5000)
+        
+        saveTimers = {}
         </script>"""))
 
 def create_input(q, textarea=False, code=False):
@@ -179,6 +218,8 @@ def answer_changed(change):
         answers[q]['answer'] = change.new
         
         save_answers()
+        
+        set_metadata_answer(q, change.owner)
 
 def score_changed(change):
     if role == 'teacher':
@@ -328,21 +369,27 @@ def ask(qid):
 
     display(widget)
     
+def set_metadata_answer(question, field):
+    q = str(question)
+    answer = field.value
+    
+    display_javascript(Javascript("if('%s' in saveTimers) { clearTimeout(saveTimers['%s']); } saveTimers['%s'] = setTimeout(function() { if(!('uva_answers' in IPython.notebook.metadata)) { IPython.notebook.metadata['uva_answers'] = {} } IPython.notebook.metadata['uva_answers']['%s'] = '%s'; IPython.notebook.save_checkpoint(); }, 500)" % (q, q, q, q, str(answer))))
+    
 def save_student_id(e):
     if not student_id_save_button.disabled:
         global student_id
+        global role
         
         old_student_id = str(student_id)
         student_id = str(student_id_field.value)
         
-        answers_df = get_answers_df(student_answers)
-        answers_df = answers_df.reset_index().replace(old_student_id, student_id).set_index(['student', 'question']).sort_index(level=0)
-        
-        save_answers_df(student_answers, answers_df)
+        if role == 'teacher':
+            answers_df = get_answers_df(student_answers)
+            answers_df = answers_df.reset_index().replace(old_student_id, student_id).set_index(['student', 'question']).sort_index(level=0)
+            
+            save_answers_df(student_answers, answers_df)
         
         student_id_save_button.disabled = True
-        
-        #display(HTML("<script>if(!('uva_student_id' in IPython.notebook.metadata) || ('uva_student_id' in IPython.notebook.metadata && IPython.notebook.metadata['uva_student_id'] != '%s')) { IPython.notebook.metadata['uva_student_id'] = '%s'; IPython.notebook.save_checkpoint(); }</script>" % (str(student_id), str(student_id))))
         
         display_javascript(Javascript("if(!('uva_student_id' in IPython.notebook.metadata) || ('uva_student_id' in IPython.notebook.metadata && IPython.notebook.metadata['uva_student_id'] != '%s')) { IPython.notebook.metadata['uva_student_id'] = '%s'; IPython.notebook.save_checkpoint(); }" % (str(student_id), str(student_id))))
  
@@ -418,7 +465,7 @@ if not fail:
         student_answers_df = get_answers_df(student_answers)
         
         try:
-            nb_name, nb_student_id = get_notebook_info()
+            nb_name, nb_student_id, metadata = get_notebook_info()
         
             if nb_student_id:
                 student_id = nb_student_id
@@ -430,6 +477,8 @@ if not fail:
     
         # display(widgets.HTML('<div class="exam-message">Het volgende student ID is gedetecteerd: <strong>%s</strong><br /><small>Verifi&euml;er of dit correct is.</small></div>' % student_id))
         display(widgets.HTML('<div class="exam-message" style="padding-bottom: 0px; margin-bottom: -5px;">Het volgende student ID is gedetecteerd:</div>'))
+        
+        global student_id_field
         
         student_id_field = widgets.Text(
             placeholder='Student ID',
@@ -471,7 +520,12 @@ if not fail:
         
         answers = student_answers_df.loc[student_id].fillna('').to_dict(orient='index')
     else:
-        if os.path.isfile(answer_file):
+        #  
+        nb_name, nb_student_id, metadata = get_notebook_info()
+    
+        if 'uva_answers' in metadata:
+            answers = { q: { 'answer': a } for q, a in metadata['uva_answers'].items() }
+        elif os.path.isfile(answer_file):
             with open(answer_file) as f:
                 answers = json.load(f)
         else:
