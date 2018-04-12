@@ -24,8 +24,13 @@ def get_notebook_info():
     
     nb_name = None
     student_id = None
+    metadata = None
     
     for s in servers:
+        if s['hostname'] == '0.0.0.0' and s['base_url'].startswith('/user/'):
+            # Hub
+            s['url'] = s['url'].replace('0.0.0.0', )
+    
         try:
             sessions = requests.get('%sapi/sessions?token=%s' % (s['url'], s['token'])).json()
         except:
@@ -520,10 +525,13 @@ if not fail:
         
         answers = student_answers_df.loc[student_id].fillna('').to_dict(orient='index')
     else:
-        #  
-        nb_name, nb_student_id, metadata = get_notebook_info()
+        # 
+        try: 
+            nb_name, nb_student_id, metadata = get_notebook_info()
+        except:
+            metadata = None
     
-        if 'uva_answers' in metadata:
+        if metadata and 'uva_answers' in metadata:
             answers = { q: { 'answer': a } for q, a in metadata['uva_answers'].items() }
         elif os.path.isfile(answer_file):
             with open(answer_file) as f:
