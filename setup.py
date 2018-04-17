@@ -1,10 +1,11 @@
 from setuptools import setup
 
 setup(
-    name='questions',
+    name='uva-questions',
     version='1.0',
     description='UvA questions module',
     packages=['questions'],
+    url='https://github.com/jessesar/uva-questions',
     author='Jesse van der Sar',
     author_email='j.d.vandersar@uva.nl',
     install_requires=[
